@@ -1,0 +1,25 @@
+' This macro converts dates in the format from MM/DD/YY to YYYY-MM-DD.
+Sub MDYtoYYYYMMDD()
+    Dim Ws As Worksheet
+    Dim Rng As Range, Cell As Range
+    Dim Str
+    Dim i As Long
+        
+    Set Ws = ActiveSheet
+    On Error Resume Next
+    Set Rng = Selection.SpecialCells(xlConstants, xlNumbers + xlTextValues)
+    If Rng Is Nothing Then
+        Exit Sub
+    End If
+    On Error GoTo 0
+    Application.ScreenUpdating = False
+    
+    For Each Cell In Rng
+        Str = Split(Cell, "/")
+        If UBound(Str) <> 2 Then Str = Split(Cell, "-")
+        Cell.NumberFormat = "@"
+        Cell = Str(2) & "-" & Format(Str(0), "00") & "-" & Format(Str(1), "00")
+    Next Cell
+    
+    Application.ScreenUpdating = True
+End Sub
