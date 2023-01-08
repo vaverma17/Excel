@@ -1,0 +1,83 @@
+' This macro creates files on the basis of unique entries in a column. Hence, if a file in a column contains 3 unique entries A, B & C, this macro will create three ' files A, B and C and those files will contain rows only corresponding to A, B and C only.
+Sub FileSplitter()
+    Dim i As Long, Lr As Long, ColNum As Long, Cnt As Long, DictCount As Long
+    Dim Dict As Object
+    Dim Arr
+    Dim SWs As Worksheet
+    Dim Path As String
+    Dim Wk As Workbook
+    
+    Application.StatusBar = ""
+    
+    Set SWs = ActiveSheet
+    'Get Column number of the selection. In case of multi selection,
+    'get the left most column number
+    ColNum = Selection.Column
+    'If selected column doesn't contain a data, then give message. First row is header row
+    'hence < 2 condition
+    If WorksheetFunction.CountA(Columns(ColNum)) < 2 Then
+        MsgBox "The selected column doesn't contain data"
+        Exit Sub
+    End If
+    
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    
+    'Use Dictionary to get a list of Unique items from selected column
+    Set Dict = CreateObject("Scripting.Dictionary")
+    Lr = SWs.Cells.SpecialCells(xlLastCell).Row
+    'Take the selected column values in an Array
+    ReDim Arr(1 To Lr - 1, 1 To 1)
+    Arr = SWs.Range(Cells(2, ColNum), Cells(Lr, ColNum))
+    'Run through all array entries and create a unique list
+    For i = 1 To Lr - 1
+        On Error Resume Next
+        Dict.Add Arr(i, 1), Arr(i, 1)
+        On Error GoTo 0
+    Next i
+    'Take the values of Dictionary in Arr
+    DictCount = Dict.Count
+    ReDim Arr(DictCount)
+    Arr = Dict.Items
+    Set Dict = Nothing
+    
+    'Extract Path of this Excel workbook. All files will be saved there.
+    Path = ActiveWorkbook.Path
+    
+    'Apply filter on the basis of Array entries and copy from here and paste into target workbook
+    'Target workbook name will be same as that of an Array entry
+    For i = LBound(Arr) To UBound(Arr)
+        'Open a new workbook where data can be copied
+        Set Wb = Workbooks.Add
+        SWs.AutoFilterMode = False
+        SWs.UsedRange.AutoFilter Field:=ColNum, Criteria1:=Arr(i)
+        SWs.AutoFilter.Range.Copy
+        Wb.Worksheets(1).Range("A1").PasteSpecial (xlPasteAll)
+        Wb.Worksheets(1).Range("A1").Select
+        'Allow only Alphabets and numbers in File Name. If any other character, replace that with nothing
+        'Trim(Arr(i)) has been used to remove a leading and trailing blanks in File name
+        Wb.SaveAs FileName:=Path & "\" & Trim(GetNewName(Arr(i))), FileFormat:=51
+        Wb.Close
+        Application.CutCopyMode = False
+        Cnt = Cnt + 1
+        Application.StatusBar = "Finished generating File " & Cnt & " of " & DictCount & " - " & Arr(i)
+    Next i
+    Application.StatusBar = DictCount & " files generated"
+    SWs.AutoFilterMode = False
+    Application.DisplayAlerts = True
+    Application.ScreenUpdating = True
+End Sub
+
+Function GetNewName(InputStr)
+    'Allow only Alphabets and numbers in File Name. If any other character, replace that with space
+    Dim RegEx As Object
+    Set RegEx = CreateObject("VBScript.RegExp")
+    With RegEx
+            .Global = True
+            .MultiLine = True
+            .IgnoreCase = False
+            .Pattern = "[^a-zA-Z0-9]+"
+    End With
+    GetNewName = RegEx.Replace(InputStr, " ")
+    Set RegEx = Nothing
+End Function
