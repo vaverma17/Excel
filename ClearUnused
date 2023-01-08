@@ -1,0 +1,38 @@
+' Sometimes, you would like to clear the unused columns and rows after you last cell used. This reduces the bloat very much and reduces the file size. This macro 
+' does the same.
+Sub ClearUnused()
+    Dim LastCell As Range
+    Dim Answer
+    Dim LastRow As Long, LastColumn As Long, LastDotPosition As Long
+    Dim FullFileName As String, FileName As String, TargetFileName As String
+    'If no data, exit the macro
+    If WorksheetFunction.CountA(Cells) = 0 Then Exit Sub
+    Application.ScreenUpdating = False
+    Answer = MsgBox("Do you want to create a copy of this Workbook?", vbQuestion + vbYesNoCancel)
+    If Answer = vbCancel Then
+        GoTo ExitSub
+    End If
+    If Answer = vbYes Then
+        FullFileName = ActiveWorkbook.FullName
+        If FullFileName = "" Then
+            MsgBox "Save this file and then run the macro"
+            GoTo ExitSub
+        End If
+        'Insert Timestamp with an underscore at the end to create a new file name for backup copy
+        LastDotPosition = InStrRev(FullFileName, ".")
+        TargetFileName = WorksheetFunction.Replace(FullFileName, LastDotPosition, 0, "_" & Format(Now(), "yyyymmddhhmmss"))
+        ActiveWorkbook.SaveCopyAs TargetFileName
+    End If
+    'Now find lastrow and column which have values. Other tricks to locate won't work here
+    'as they will stop at the format also.
+    LastRow = Cells.Find(What:="*", After:=[A1], SearchOrder:=xlByRows, SearchDirection:=xlPrevious).Row
+    LastColumn = Cells.Find(What:="*", After:=[A1], SearchOrder:=xlByColumns, SearchDirection:=xlPrevious).Column
+    Application.ScreenUpdating = False
+    'Clear Rows first
+    Rows(LastRow + 1 & ":" & Rows.Count).Clear
+    'Clear Columns
+    Columns(Split(Cells(1, LastColumn + 1).Address, "$")(1) & ":" & Split(Cells(1, Columns.Count).Address, "$")(1)).Clear
+    ActiveWorkbook.Save
+ExitSub:
+    Application.ScreenUpdating = True
+End Sub
