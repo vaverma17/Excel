@@ -1,0 +1,33 @@
+' This macro removes all non-printable characters from the range selected by you.
+Sub CleanUpData()
+    Dim Ws As Worksheet
+    Dim Rng As Range, Cell As Range
+    Dim ArrCodes
+    Dim i As Long
+        
+    Set Ws = ActiveSheet
+    On Error Resume Next
+    Set Rng = Selection.SpecialCells(xlConstants, xlNumbers + xlTextValues)
+    If Rng Is Nothing Then
+        Exit Sub
+    End If
+    On Error GoTo 0
+    
+    ArrCodes = Array(127, 129, 141, 143, 144, 157, 160)
+    
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    
+    For Each Cell In Rng
+        'Use the CLEAN function to remove 32 non printing chracters (0 to 31)
+        'Trim is for removing leading and trailing blanks
+        Cell = Trim(WorksheetFunction.Clean(Cell))
+        'Now remove character code 127, 129, 141, 143, 144, 157, 160
+        For i = LBound(ArrCodes) To UBound(ArrCodes)
+            Cell = Replace(Cell, Chr(ArrCodes(i)), "")
+        Next i
+    Next Cell
+    
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+End Sub
