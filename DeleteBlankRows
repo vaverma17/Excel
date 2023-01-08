@@ -1,0 +1,44 @@
+' This macro deletes all blank rows from your workbook.
+Sub Delete_Blank_Rows()
+    Dim Ws As Worksheet
+    Dim Path As String, Name As String
+    Dim Answer, Arr, Extension
+    Dim LastRow As Long, i As Long
+    
+    On Error GoTo ExitSub
+    Set Ws = ActiveSheet
+    
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+
+    'If you need to create a backup copy of the workbook before deletion
+    Answer = MsgBox("Do you want to create a backup of this file", vbQuestion + vbYesNoCancel, "Backup the file?")
+    
+    If Answer = vbCancel Then GoTo ExitSub
+    
+    If Answer = vbYes Then
+        'Save a copy of the workbook appended with timestamp
+        Path = ActiveWorkbook.FullName
+        Arr = Split(Path, ".")
+        Name = Arr(UBound(Arr) - 1)
+        Extension = Arr(UBound(Arr))
+        Name = Name & "_" & Format(Now(), "mmddyyhhmmss")
+        Arr(UBound(Arr) - 1) = Name
+        Name = Join(Arr, ".")
+        ActiveWorkbook.SaveCopyAs Name
+    End If
+    
+    'Get the last used row of the worksheet
+    LastRow = Ws.Cells.SpecialCells(xlLastCell).Row
+    
+    'We need to loop from this last row to first row and delete if cell is blank
+    For i = LastRow To 1 Step -1
+        If WorksheetFunction.CountA(Ws.Rows(i)) = 0 Then
+            Ws.Rows(i).Delete
+        End If
+    Next i
+ExitSub:
+    Application.ScreenUpdating = True
+    Application.DisplayAlerts = True
+    
+End Sub
