@@ -1,4 +1,4 @@
-' This macro converts dates in the format from MM/DD/YY to YYYY-MM-DD.
+' This macro converts dates in the format from MM/DD/YY to YYYY-MM-DD. Just select the required range and run this macro.
 Sub MDYtoYYYYMMDD()
     Dim Ws As Worksheet
     Dim Rng As Range, Cell As Range
